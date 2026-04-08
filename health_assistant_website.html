@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Medicine & Health Assistant</title>
+    <style>
+        body { font-family: Arial; text-align: center; background: #f4f6f8; }
+        .box { background: white; padding: 15px; margin: 10px auto; width: 350px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
+        button { padding: 8px 12px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .red { background: red; color: white; }
+    </style>
+</head>
+<body>
+
+<h2>Smart Medicine & Health Assistant</h2>
+
+<div class="box">
+    <h3>Medicine</h3>
+    <input id="medName" placeholder="Medicine Name"><br><br>
+    <input id="medTime" type="time"><br><br>
+    <button onclick="addMedicine()">Add Medicine</button>
+    <button onclick="markTaken()">Mark as Taken</button>
+    <ul id="medList"></ul>
+    <button class="red" onclick="stopAlarm()">Stop Alarm</button>
+</div>
+
+<div class="box">
+    <h3>Water</h3>
+    <button onclick="addWater()">Drink Water</button>
+    <p id="waterLabel">0 glasses</p>
+</div>
+
+<div class="box">
+    <h3>Sleep</h3>
+    <input id="sleepInput" type="number" placeholder="Hours">
+    <button onclick="saveSleep()">Save</button>
+    <p id="sleepLabel">0 hrs</p>
+</div>
+
+<div class="box">
+    <h3>Exercise</h3>
+    <input id="exerciseInput" type="number" placeholder="Minutes">
+    <button onclick="saveExercise()">Save</button>
+    <p id="exerciseLabel">0 mins</p>
+</div>
+
+<div class="box">
+    <button onclick="showReport()">Show Health Report</button>
+</div>
+
+<audio id="alarmSound" loop>
+    <source src="https://www.soundjay.com/buttons/beep-07.wav" type="audio/wav">
+</audio>
+
+<script>
+let medicines = [];
+let waterCount = 0;
+let sleepHours = 0;
+let exerciseMinutes = 0;
+
+function addMedicine() {
+    let name = document.getElementById("medName").value;
+    let time = document.getElementById("medTime").value;
+
+    if (!name || !time) {
+        alert("Enter medicine name and time");
+        return;
+    }
+
+    medicines.push({name, time, taken:false, alerted:false});
+    updateList();
+}
+
+function updateList() {
+    let list = document.getElementById("medList");
+    list.innerHTML = "";
+
+    medicines.forEach((m,i)=>{
+        let li = document.createElement("li");
+        li.textContent = `${m.name} at ${m.time} - ${m.taken ? "Taken" : "Pending"}`;
+        li.onclick = ()=>selectedIndex=i;
+        list.appendChild(li);
+    });
+}
+
+let selectedIndex = null;
+
+function markTaken() {
+    if (selectedIndex !== null) {
+        medicines[selectedIndex].taken = true;
+        stopAlarm();
+        updateList();
+    }
+}
+
+function checkTime() {
+    let now = new Date();
+    let current = now.toTimeString().slice(0,5);
+
+    medicines.forEach(m=>{
+        if (m.time === current && !m.taken && !m.alerted) {
+            m.alerted = true;
+            startAlarm();
+            alert("Time to take " + m.name);
+        }
+    });
+}
+
+setInterval(checkTime,1000);
+
+function startAlarm() {
+    document.getElementById("alarmSound").play();
+}
+
+function stopAlarm() {
+    let audio = document.getElementById("alarmSound");
+    audio.pause();
+    audio.currentTime = 0;
+}
+
+function addWater() {
+    waterCount++;
+    document.getElementById("waterLabel").textContent = waterCount + " glasses";
+}
+
+function saveSleep() {
+    sleepHours = document.getElementById("sleepInput").value;
+    document.getElementById("sleepLabel").textContent = sleepHours + " hrs";
+}
+
+function saveExercise() {
+    exerciseMinutes = document.getElementById("exerciseInput").value;
+    document.getElementById("exerciseLabel").textContent = exerciseMinutes + " mins";
+}
+
+function showReport() {
+    let taken = medicines.filter(m=>m.taken).length;
+    let total = medicines.length;
+
+    let health = (taken===total ? 100:60 + (waterCount>5?100:50) + (sleepHours>=6?100:50) + (exerciseMinutes>=15?100:50))/4;
+
+    alert(`Health Score: ${health}%\nMedicines: ${taken}/${total}\nWater: ${waterCount}\nSleep: ${sleepHours}\nExercise: ${exerciseMinutes}`);
+}
+</script>
+
+</body>
+</html>
